@@ -17,9 +17,44 @@ describe("Fund" , function() {
     const [owner, acc1, acc2] = await ethers.getSigners();
 
     const Fund = await ethers.getContractFactory("Fund")
-    const fund = await Fund.deploy()
+    const fund = await Fund.deploy(unlockTime)
 
     return {fund, unlockTime, lockedAmount, owner, acc1, acc2}
+  }
+
+  async function deployOneYearLock2Fixture() {
+    const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
+    // const ONE_GWEI = 1_000_000_000;
+
+    // const lockedAmount = ONE_GWEI;
+    const lockedAmount = 1000;
+    const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+
+    const [owner, acc1, acc2] = await ethers.getSigners();
+
+    const Fund = await ethers.getContractFactory("Fund")
+    const fund = await Fund.deploy(unlockTime)
+    const contractAddress = await fund.getAddress();
+    await fund.mint(lockedAmount);
+    return {fund, unlockTime, lockedAmount,contractAddress, owner, acc1, acc2}
+  }
+
+  async function deployOneYearLock3Fixture() {
+    const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
+    // const ONE_GWEI = 1_000_000_000;
+
+    // const lockedAmount = ONE_GWEI;
+    const lockedAmount = 1000;
+    const depositAmount = 100;
+    const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+
+    const [owner, acc1, acc2] = await ethers.getSigners();
+    const Fund = await ethers.getContractFactory("Fund")
+    const fund = await Fund.deploy(unlockTime)
+    const contractAddress = await fund.getAddress();
+    await fund.mint(lockedAmount);
+    await fund.deposit(depositAmount);
+    return {fund, unlockTime, lockedAmount, contractAddress, depositAmount, owner, acc1, acc2}
   }
 
   describe("Deployment", function () {
@@ -33,7 +68,7 @@ describe("Fund" , function() {
       const { fund, owner } = await loadFixture(deployOneYearLockFixture);
 
       expect(await fund.owner()).to.equal(owner.address);
-    });
+    });  
 
     // it("Should receive and store the funds to lock", async function () {
     //   const { fund, lockedAmount } = await loadFixture(
@@ -43,29 +78,41 @@ describe("Fund" , function() {
     //   expect(await ethers.provider.getBalance(fund.target)).to.equal(
     //     lockedAmount
     //   );
-    // });
-
-
+    // });s
 
     it("Should deposit the right amount", async function() {
-      const {fund, owner} = await loadFixture(deployOneYearLockFixture)
-
-      const mintAmount = 1000;
-      await fund.mint(mintAmount);
-      expect(await fund.totalSupply()).to.equal(mintAmount)
-      expect(await fund.balanceOf(owner)).to.equal(mintAmount)
-      
+      const {fund, owner, contractAddress} = await loadFixture(deployOneYearLock2Fixture)
       const depositAmount = 100
-      const contractAddress = await fund.getAddress();
       // await expect(
-      //   await fund.deposit(depositAmount)
+      //   fund.deposit(depositAmount)
       // ).to.changeTokenBalances(fund, [owner, contractAddress], [-100, 100]);
 
-      await fund.withdraw()
+      expect(fund.deposit(depositAmount)).to.changeEtherBalances([owner, contractAddress], [-100, 100]);
+    })
+
+    it("Owner should not withdrawal now", async function() {
+      const {fund, owner} = await loadFixture(deployOneYearLock3Fixture)
+    
+
+      await expect(fund.withdraw(100)).to.be.reverted;
+    })
+
+    it("Owner can withdraw after unlock time", async function() {
+      const {fund, owner, unlockTime, lockedAmount, contractAddress} = await loadFixture(deployOneYearLock3Fixture)
+      
+      await time.increaseTo(unlockTime)
+
+      // await expect(fund.withdraw()).to.emit(fund, "Transfer").withArgs(contractAddress, owner, lockedAmount);
+       await expect(fund.withdraw(100)).to.changeEtherBalances(
+        [owner, contractAddress],
+        [100, -100]
+      );
     })
   })
 
-  // it("Owner should not withdrawal now", async function() {
-
+  // describe("Transaction", function() {
+  //   it("Should not withdraw if account not authorized", async function() {
+  //     const {fund, owner, acc1} = await loadFixture(deployOneYearLock3Fixture)
+  //   })
   // })
 })
