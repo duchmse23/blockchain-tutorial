@@ -46,4 +46,15 @@ describe("StepperEscrowEth", () => {
     const expectResult = BigInt(1e17 * 2);
     await expect(contract.release()).to.changeEtherBalance(user1, expectResult)
   })
+
+  it("Release final week successful", async () => {
+    await time.increase(7 * WEEK)
+    const expectResult = BigInt(1e17 * 7);
+    await expect(contract.release()).to.changeEtherBalance(user1, expectResult)
+  })
+
+  it("Try release again failed", async () => {
+    await time.increase(WEEK)
+    await expect(contract.release()).to.be.revertedWith("Late")
+  })
 })

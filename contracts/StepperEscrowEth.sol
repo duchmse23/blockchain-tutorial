@@ -45,9 +45,6 @@ contract StepperEscrowEth {
     function release() public {
         uint currentStep = getStepsBetween(startTime, block.timestamp);
         console.log("amount %s", amount);
-        if (amount == 0) {
-            revert("Poor");
-        }
         if (currentStep > steps) {
             revert("Late");
         }
