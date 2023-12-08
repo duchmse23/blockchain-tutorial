@@ -8,11 +8,6 @@ pragma solidity ^0.8.9;
 import "hardhat/console.sol";
 
 contract StepperEscrowEth {
-    struct ReleaseTransaction {
-        uint when;
-        uint amount;
-    }
-
     address public lender;
     address public borrower;
     uint public amount;
@@ -20,7 +15,6 @@ contract StepperEscrowEth {
     uint public unlockTime;
     uint public startTime;
     uint public steps;
-    mapping(uint => ReleaseTransaction) releaseHistory;
 
     function getStepsBetween(
         uint _start,
