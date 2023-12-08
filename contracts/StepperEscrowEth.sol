@@ -22,7 +22,7 @@ contract StepperEscrowEth {
     ) private pure returns (uint) {
         require(_end > _start, "Invalid range to get steps");
         uint result = (_end + 1 - _start) / 1 weeks;
-        console.log("result %s %s %s", result, _start, _end);
+        // console.log("result %s %s %s", result, _start, _end);
         return result;
     }
 
@@ -38,16 +38,16 @@ contract StepperEscrowEth {
 
     function release() public {
         uint currentStep = getStepsBetween(startTime, block.timestamp);
-        console.log("amount %s", amount);
+        // console.log("amount %s", amount);
         if (currentStep > steps) {
             revert("Late");
         }
         uint ogAmount = steps * amountEachStep;
-        console.log("ogAmount %s %s %s", ogAmount, steps, amountEachStep);
+        // console.log("ogAmount %s %s %s", ogAmount, steps, amountEachStep);
         if (amount <= ogAmount) {
             uint stepsElapsed = (ogAmount - amount) / amountEachStep;
             uint releasableSteps = currentStep - stepsElapsed;
-            console.log("releasableSteps %s", releasableSteps);
+            // console.log("releasableSteps %s", releasableSteps);
             uint releasableAmount = releasableSteps * amountEachStep;
             payable(borrower).transfer(releasableAmount);
             amount -= releasableAmount;
