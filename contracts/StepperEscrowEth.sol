@@ -11,7 +11,7 @@ contract StepperEscrowEth {
     address public lender;
     address public borrower;
     uint public amount;
-    uint public amountEachStep;
+    uint public totalReleased;
     uint public unlockTime;
     uint public startTime;
     uint public steps;
@@ -22,7 +22,6 @@ contract StepperEscrowEth {
     ) private pure returns (uint) {
         require(_end > _start, "Invalid range to get steps");
         uint result = (_end + 1 - _start) / 1 weeks;
-        // console.log("result %s %s %s", result, _start, _end);
         return result;
     }
 
@@ -33,24 +32,25 @@ contract StepperEscrowEth {
         startTime = block.timestamp;
         unlockTime = _unlockTime;
         steps = getStepsBetween(startTime, _unlockTime);
-        amountEachStep = amount / steps;
     }
 
     function release() public {
         uint currentStep = getStepsBetween(startTime, block.timestamp);
-        // console.log("amount %s", amount);
         if (currentStep > steps) {
             revert("Late");
         }
-        uint ogAmount = steps * amountEachStep;
-        // console.log("ogAmount %s %s %s", ogAmount, steps, amountEachStep);
-        if (amount <= ogAmount) {
-            uint stepsElapsed = (ogAmount - amount) / amountEachStep;
+        console.log("ogAmount %s %s %s", amount, steps, totalReleased);
+        if (totalReleased < amount) {
+            uint releasePerStep = amount / steps;
+            uint stepsElapsed = totalReleased / releasePerStep;
             uint releasableSteps = currentStep - stepsElapsed;
-            // console.log("releasableSteps %s", releasableSteps);
-            uint releasableAmount = releasableSteps * amountEachStep;
+            uint remainingAmount = amount - totalReleased;
+            uint expectableAmount = releasableSteps * releasePerStep;
+            uint releasableAmount = expectableAmount > remainingAmount
+                ? remainingAmount
+                : expectableAmount;
+            totalReleased += releasableAmount;
             payable(borrower).transfer(releasableAmount);
-            amount -= releasableAmount;
         }
     }
 }
