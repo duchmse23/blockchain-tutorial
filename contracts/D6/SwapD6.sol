@@ -10,7 +10,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "../../D4/Token.sol";
+import "../D4/Token.sol";
 
 contract SwapD6 is ERC20 {
     // uint256 private _totalSupply;
